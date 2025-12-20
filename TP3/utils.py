@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 from typing import Tuple
 
 
-
 def createData(row: int, col: int) -> Tuple[np.ndarray, np.ndarray]:
     """Version avec vrai hyperplan de séparation"""
     # Génération des features
@@ -14,7 +13,7 @@ def createData(row: int, col: int) -> Tuple[np.ndarray, np.ndarray]:
     b = np.random.randn()
     
     # Scores + bruit
-    scores = X @ W + b + np.random.normal(1, 1, (row, 1))
+    scores = X @ W + b + np.random.normal(0, 0.1, (row, 1))
     
     # Labels binaires
     y = (scores > 0).astype(int).flatten()
@@ -127,4 +126,35 @@ def plotData(x: np.ndarray, y: np.ndarray, W: np.ndarray = None, b: float = None
     plt.show()
 
 
+def sigmoid(x : np.ndarray) -> np.ndarray :
+    return 1 / (1 + np.exp(-x))
 
+def predict(X : np.ndarray, W : np.ndarray, b : float) -> np.ndarray :
+    return sigmoid(X @ W + b)
+
+
+def loss(y : np.ndarray, y_pred : np.ndarray) -> float :
+    if(y.shape != y_pred.shape):
+        raise Exception("The shape of the array should be the same")
+    
+    epsilon = 1e-15
+    y_pred = np.clip(y_pred, epsilon, 1 - epsilon) # Pour s'assurer que rien est a 0
+    return -np.mean(y * np.log(y_pred) + ((1-y)*np.log(1-y_pred)))
+
+
+def gradients(X: np.ndarray, y: np.ndarray, y_predict: np.ndarray) -> Tuple[np.ndarray, float]:
+    N = X.shape[0]
+    error = y_predict - y  # (N, 1)
+    dW = (1 / N) * (X.T @ error)  # (d, 1)
+    db = np.mean(error)  # scalaire
+    return dW, db
+
+def gradientDescent(val: np.ndarray, val_derivative: np.ndarray, learning_rate: float) -> np.ndarray:
+    return val - learning_rate * val_derivative
+
+def updateParam(
+    W: np.ndarray, dW: np.ndarray, b: float, db: float, learning_rate: float
+) -> Tuple[np.ndarray, float]:
+    W_updated = gradientDescent(W, dW, learning_rate)
+    b_updated = gradientDescent(b, db, learning_rate)
+    return W_updated, b_updated
